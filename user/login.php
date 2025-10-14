@@ -1,6 +1,9 @@
 <?php
 session_start();
 include '../admin/connection.php';
+
+$login_error = $_SESSION['login_error'] ?? '';
+unset($_SESSION['login_error']);
 ?>
 
 <!DOCTYPE html>
@@ -21,62 +24,43 @@ button:hover{background:#4aa63a;}
 .toggle-btns button{width:auto;padding:8px 15px;cursor:pointer;}
 form{display:none;transition: all 0.5s ease;}
 form.active{display:block;}
-.google-btn-container{margin-top:15px;text-align:center;}
 </style>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 
 <div class="container">
 
-    <div class="toggle-btns">
-        <button id="showLogin">Sign In</button>
-        <button id="showSignup">Sign Up</button>
-    </div>
+<div class="toggle-btns">
+    <button id="showLogin">Sign In</button>
+    <button id="showSignup">Sign Up</button>
+</div>
 
-    <!-- LOGIN FORM -->
-    <form id="loginForm" method="POST" class="<?php echo isset($_POST['login']) ? 'active' : 'active'; ?>">
-        <h2>Login</h2>
-        <?php if($login_error) echo "<p class='error'>$login_error</p>"; ?>
-        <input type="email" name="email" placeholder="Email" required>
-        <input type="password" name="password" placeholder="Password" required>
-        <button type="submit" name="login">Sign In</button>
+<!-- LOGIN FORM -->
+<form id="loginForm" method="POST" class="active">
+    <h2>Login</h2>
+    <?php if($login_error) echo "<p class='error'>$login_error</p>"; ?>
+    <input type="email" name="email" placeholder="Email" required>
+    <input type="password" name="password" placeholder="Password" required>
+    <button type="submit" name="login">Sign In</button>
+</form>
 
-        <!-- GOOGLE SIGN-IN BUTTON -->
-        <div class="google-btn-container">
-            <div id="g_id_onload"
-                 data-client_id="118273742805-m3ms6j431fsvisua476ulljtu3gahibk.apps.googleusercontent.com"
-                 data-login_uri="http://localhost/OrganicFarming/Organic-Farmers/admin/google_callback.php"
-                 data-auto_prompt="false">
-            </div>
-
-            <div class="g_id_signin"
-                 data-type="standard"
-                 data-size="large"
-                 data-theme="outline"
-                 data-text="sign_in_with"
-                 data-shape="rectangular"
-                 data-logo_alignment="left">
-            </div>
-        </div>
-    </form>
-
-    <!-- SIGN UP FORM -->
-    <form id="signupForm" method="POST" class="<?php echo isset($_POST['signup']) ? 'active' : ''; ?>">
-        <h2>Sign Up</h2>
-        <?php if($signup_error) echo "<p class='error'>$signup_error</p>"; ?>
-        <input type="text" name="name" placeholder="Full Name" required>
-        <input type="text" name="mobile" placeholder="Mobile Number" required>
-        <input type="date" name="birth" placeholder="Date of Birth" required>
-        <input type="email" name="email" placeholder="Email" required>
-        <input type="text" name="address" placeholder="Address" required>
-        <input type="password" name="password" placeholder="Password" required>
-        <button type="submit" name="signup">Sign Up</button>
-    </form>
+<!-- SIGN UP FORM -->
+<form id="signupForm" method="POST">
+    <h2>Sign Up</h2>
+    <?php if(isset($_SESSION['signup_error'])) { echo "<p class='error'>{$_SESSION['signup_error']}</p>"; unset($_SESSION['signup_error']); } ?>
+    <input type="text" name="name" placeholder="Full Name" required>
+    <input type="text" name="mobile" placeholder="Mobile Number" required>
+    <input type="date" name="birth" placeholder="Date of Birth" required>
+    <input type="email" name="email" placeholder="Email" required>
+    <input type="text" name="address" placeholder="Address" required>
+    <input type="password" name="password" placeholder="Password" required>
+    <button type="submit" name="signup">Sign Up</button>
+</form>
 
 </div>
 
 <script>
+// Toggle forms
 const loginForm = document.getElementById('loginForm');
 const signupForm = document.getElementById('signupForm');
 const showLogin = document.getElementById('showLogin');

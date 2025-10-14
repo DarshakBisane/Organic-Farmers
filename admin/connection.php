@@ -3,19 +3,25 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// ========== DATABASE CONNECTION ==========
+// ==================== DATABASE ====================
 $servername = "localhost";
 $username = "root";
 $password = "";
 $dbname = "organicfarming";
 
 $conn = new mysqli($servername, $username, $password, $dbname);
-
 if ($conn->connect_error) {
     die("<p style='color:red;'>❌ Connection failed: " . $conn->connect_error . "</p>");
 }
 
-// ========== ADD PRODUCT ==========
+// ==================== PHPMailer ====================
+require 'PHPMailer/src/PHPMailer.php';
+require 'PHPMailer/src/SMTP.php';
+require 'PHPMailer/src/Exception.php';
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+// ==================== ADD PRODUCT ====================
 if (isset($_POST['submit'])) {
     $name = $_POST['name'];
     $price = $_POST['price'];
@@ -46,65 +52,105 @@ if (isset($_POST['submit'])) {
     }
 }
 
-// ========== USER SIGNUP & LOGIN ==========
-$signup_error = $login_error = "";
+// ==================== USER SIGNUP (EMAIL OTP) ====================
+if (isset($_POST['signup'])) {
+    $name = trim($_POST['name']);
+    $mobile = trim($_POST['mobile']);
+    $birth = trim($_POST['birth']);
+    $email = trim($_POST['email']);
+    $address = trim($_POST['address']);
+    $password = trim($_POST['password']);
+    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-// PASSWORD LOGIN
+    // Check if email exists
+    $stmt = $conn->prepare("SELECT id FROM users WHERE email=?");
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $stmt->store_result();
+
+    if ($stmt->num_rows > 0) {
+        $_SESSION['signup_error'] = "Email already registered! Please sign in.";
+        header("Location: ../user/login.php?show=login");
+        exit();
+    }
+
+    // Generate OTP and store in session
+    $_SESSION['otp'] = rand(100000, 999999);
+    $_SESSION['temp_user_data'] = [
+        'name' => $name,
+        'mobile' => $mobile,
+        'birth' => $birth,
+        'email' => $email,
+        'address' => $address,
+        'password' => $hashed_password
+    ];
+
+    // Send OTP email via PHPMailer
+    $mail = new PHPMailer(true);
+    try {
+        $mail->isSMTP();
+        $mail->Host = 'smtp.gmail.com';
+        $mail->SMTPAuth = true;
+        $mail->Username = 'yourgmail@gmail.com'; // Replace with your Gmail
+        $mail->Password = 'yourapppassword';    // Gmail App Password
+        $mail->SMTPSecure = 'tls';
+        $mail->Port = 587;
+
+        $mail->setFrom('yourgmail@gmail.com', 'OrganicFarm');
+        $mail->addAddress($email, $name);
+
+        $mail->isHTML(true);
+        $mail->Subject = 'Your OTP for OrganicFarm Signup';
+        $mail->Body = "
+            <h2>Hello $name!</h2>
+            <p>Your OTP for OrganicFarm signup is: <strong>{$_SESSION['otp']}</strong></p>
+            <p>Do not share this OTP with anyone.</p>
+        ";
+
+        $mail->send();
+        header("Location: ../user/verify.php");
+        exit();
+    } catch (Exception $e) {
+        $_SESSION['signup_error'] = "Signup successful, but OTP could not be sent.";
+        header("Location: ../user/login.php?show=signup");
+        exit();
+    }
+}
+
+// ==================== USER LOGIN ====================
 if (isset($_POST['login'])) {
-    $email = $_POST['email'];
-    $password = $_POST['password'];
+    $email = trim($_POST['email']);
+    $password = trim($_POST['password']);
 
     $stmt = $conn->prepare("SELECT id, name, password, is_verified FROM users WHERE email=?");
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $stmt->store_result();
-    if ($stmt->num_rows == 1) {
+
+    if ($stmt->num_rows === 1) {
         $stmt->bind_result($id, $name, $hashed_password, $is_verified);
         $stmt->fetch();
+
         if (!$is_verified) {
-            $login_error = "Please verify your email before login.";
-        } elseif (!empty($hashed_password) && password_verify($password, $hashed_password)) {
+            $_SESSION['login_error'] = "Please verify your email before logging in.";
+            header("Location: ../user/login.php?show=login");
+            exit();
+        }
+
+        if (password_verify($password, $hashed_password)) {
             $_SESSION['user_id'] = $id;
             $_SESSION['user_name'] = $name;
             $_SESSION['user_email'] = $email;
             header("Location: ../user/index.php");
             exit();
         } else {
-            $login_error = "Invalid password!";
+            $_SESSION['login_error'] = "Invalid password!";
         }
     } else {
-        $login_error = "Email not registered!";
+        $_SESSION['login_error'] = "Email not registered!";
     }
-}
 
-// PASSWORD SIGNUP
-if (isset($_POST['signup'])) {
-    $name = $_POST['name'];
-    $mobile = $_POST['mobile'];
-    $birth = $_POST['birth'];
-    $email = $_POST['email'];
-    $address = $_POST['address'];
-    $password = $_POST['password'];
-    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-
-    $stmt = $conn->prepare("SELECT id FROM users WHERE email=?");
-    $stmt->bind_param("s", $email);
-    $stmt->execute();
-    $stmt->store_result();
-    if($stmt->num_rows > 0){
-        $signup_error = "Email already registered!";
-    } else {
-        $stmt = $conn->prepare("INSERT INTO users (name, mobile, birth, email, address, password, is_verified) VALUES (?, ?, ?, ?, ?, ?, 1)");
-        $stmt->bind_param("sissss", $name, $mobile, $birth, $email, $address, $hashed_password);
-        if($stmt->execute()){
-            $_SESSION['user_id'] = $conn->insert_id;
-            $_SESSION['user_name'] = $name;
-            $_SESSION['user_email'] = $email;
-            header("Location: ../user/index.php");
-            exit();
-        } else {
-            $signup_error = "Error registering user!";
-        }
-    }
+    header("Location: ../user/login.php?show=login");
+    exit();
 }
 ?>
