@@ -91,12 +91,12 @@ if (isset($_POST['signup'])) {
         $mail->isSMTP();
         $mail->Host = 'smtp.gmail.com';
         $mail->SMTPAuth = true;
-        $mail->Username = 'yourgmail@gmail.com'; // Replace with your Gmail
-        $mail->Password = 'yourapppassword';    // Gmail App Password
+        $mail->Username = 'darshak123321@gmail.com'; // Replace with your Gmail
+        $mail->Password = 'wvlq ghzc sabe rugy';    // Gmail App Password
         $mail->SMTPSecure = 'tls';
         $mail->Port = 587;
 
-        $mail->setFrom('yourgmail@gmail.com', 'OrganicFarm');
+        $mail->setFrom('darshak123321@gmail.com', 'OrganicFarm');
         $mail->addAddress($email, $name);
 
         $mail->isHTML(true);

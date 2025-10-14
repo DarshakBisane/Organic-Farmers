@@ -1,4 +1,8 @@
-<?php include("connection.php"); ?>
+<?php 
+    include("connection.php");
+    include("../user/footer.php");
+    
+ ?>
 
 <!DOCTYPE html>
 <html lang="en">
