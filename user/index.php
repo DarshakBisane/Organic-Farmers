@@ -29,14 +29,21 @@ footer{background:#3e8e41;color:white;text-align:center;padding:20px;margin-top:
 <body>
 
 <nav>
-  <div class="logo">🌱 Organic Farmers</div>
-  <div class="menu-toggle" id="menuToggle">⋮</div>
-  <ul class="nav-links" id="navLinks">
-    <li><a href="index.php">Home</a></li>
-    <li><a href="products.php">Products</a></li>
-    <li><a href="login.php">Sign In</a></li>
-  </ul>
+    <div class="logo">🌱 Organic Farmers</div>
+    <div class="menu-toggle" id="menuToggle">⋮</div>
+
+    <ul class="nav-links" id="navLinks">
+        <li><a href="index.php">Home</a></li>
+        <li><a href="products.php">Products</a></li>
+        <?php if(isset($_SESSION['user_name'])): ?>
+            <li><a href="profile.php"><?php echo htmlspecialchars($_SESSION['user_name']); ?></a></li>
+        <?php else: ?>
+            <li><a href="login.php">Sign In</a></li>
+        <?php endif; ?>
+        <li><a href="#">Contact</a></li>
+    </ul>
 </nav>
+
 
 <div class="slider" id="slider">
   <img src="https://images.unsplash.com/photo-1501004318641-b39e6451bec6" class="slide active">

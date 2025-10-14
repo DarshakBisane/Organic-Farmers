@@ -2,6 +2,7 @@
 session_start();
 include '../admin/connection.php';
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -25,7 +26,9 @@ form.active{display:block;}
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
+
 <div class="container">
+
     <div class="toggle-btns">
         <button id="showLogin">Sign In</button>
         <button id="showSignup">Sign Up</button>
@@ -38,12 +41,15 @@ form.active{display:block;}
         <input type="email" name="email" placeholder="Email" required>
         <input type="password" name="password" placeholder="Password" required>
         <button type="submit" name="login">Sign In</button>
+
+        <!-- GOOGLE SIGN-IN BUTTON -->
         <div class="google-btn-container">
             <div id="g_id_onload"
-                 data-client_id="YOUR_GOOGLE_CLIENT_ID"
-                 data-login_uri="http://localhost/Organic%20Farming/admin/google_callback.php"
+                 data-client_id="118273742805-m3ms6j431fsvisua476ulljtu3gahibk.apps.googleusercontent.com"
+                 data-login_uri="http://localhost/OrganicFarming/Organic-Farmers/admin/google_callback.php"
                  data-auto_prompt="false">
             </div>
+
             <div class="g_id_signin"
                  data-type="standard"
                  data-size="large"
@@ -67,6 +73,7 @@ form.active{display:block;}
         <input type="password" name="password" placeholder="Password" required>
         <button type="submit" name="signup">Sign Up</button>
     </form>
+
 </div>
 
 <script>
@@ -79,10 +86,12 @@ showLogin.addEventListener('click', () => {
     loginForm.classList.add('active');
     signupForm.classList.remove('active');
 });
+
 showSignup.addEventListener('click', () => {
     signupForm.classList.add('active');
     loginForm.classList.remove('active');
 });
 </script>
+
 </body>
 </html>
