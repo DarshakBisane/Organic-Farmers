@@ -1,4 +1,8 @@
-<?php include '../admin/connection.php'; ?>
+<?php 
+    include '../admin/connection.php'; 
+    include ("header.php");
+
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>

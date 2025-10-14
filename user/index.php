@@ -3,6 +3,7 @@ if(session_status() == PHP_SESSION_NONE){
     session_start();
 }
 include '../admin/connection.php';
+include ("header.php");
 
 // Handle search query
 $search = isset($_GET['search']) ? $_GET['search'] : '';
@@ -57,28 +58,7 @@ footer{background:#3e8e41;color:white;text-align:center;padding:20px;margin-top:
 <body>
 
 <!-- ===== NAVBAR ===== -->
-<nav>
-  <div class="logo">🌱 Organic Farmers</div>
-  <div> <!-- SEARCH FORM -->
-        <form method="GET" action="index.php">
-            <input type="text" name="search" placeholder="Search products..." value="<?php echo htmlspecialchars($search); ?>">
-            <button type="submit">Search</button>
-        </form>
-  </div>
-  <div class="menu-toggle" id="menuToggle">⋮</div>
-  <ul class="nav-links" id="navLinks">
-    <li><a href="index.php">Home</a></li>
-    <li><a href="products.php">Products</a></li>
-    <li>
-      <?php if(isset($_SESSION['user_name'])): ?>
-        <a href="profile.php"><?php echo htmlspecialchars($_SESSION['user_name']); ?></a>
-      <?php else: ?>
-        <a href="login.php">Sign In</a>
-      <?php endif; ?>
-    </li>
-    <li><a href="#">Contact</a></li>
-  </ul>
-</nav>
+
 
 <!-- ===== SLIDER ===== -->
 <div class="slider" id="slider">
@@ -124,24 +104,6 @@ if($result->num_rows > 0){
 <p>© 2025 Organic Farmers. All rights reserved.</p>
 </footer>
 
-<!-- ===== JS ===== -->
-<script>
-// ===== MOBILE MENU TOGGLE =====
-const menuToggle = document.getElementById("menuToggle");
-const navLinks = document.getElementById("navLinks");
-menuToggle.addEventListener("click", () => {
-    navLinks.classList.toggle("active");
-});
-
-// ===== SLIDER =====
-const slides = document.querySelectorAll("#slider .slide");
-let current = 0;
-setInterval(() => {
-    slides[current].classList.remove("active");
-    current = (current + 1) % slides.length;
-    slides[current].classList.add("active");
-}, 4000);
-</script>
 
 </body>
 </html>

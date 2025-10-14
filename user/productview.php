@@ -1,5 +1,7 @@
 <?php
-include '../admin/connection.php';
+    include '../admin/connection.php';
+    include ("header.php");
+
 if(!isset($_GET['id']) || empty($_GET['id'])) die("Invalid product.");
 
 $product_id = $_GET['id'];

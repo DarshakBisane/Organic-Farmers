@@ -1,6 +1,8 @@
 <?php
 session_start();
-include '../admin/connection.php';
+    include '../admin/connection.php';
+    include ("header.php");
+
 
 if(!isset($_SESSION['temp_user_data'])){
     header("Location: login.php");
@@ -16,7 +18,7 @@ if(isset($_POST['verify'])){
         $data = $_SESSION['temp_user_data'];
 
         $stmt = $conn->prepare("INSERT INTO users (name, mobile, birth, email, address, password, is_verified) VALUES (?, ?, ?, ?, ?, ?, 1)");
-        $stmt->bind_param("sssssss", $data['name'], $data['mobile'], $data['birth'], $data['email'], $data['address'], $data['password']);
+        $stmt->bind_param("ssssss", $data['name'], $data['mobile'], $data['birth'], $data['email'], $data['address'], $data['password']);
         $stmt->execute();
 
         // Set session for logged-in user

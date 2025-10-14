@@ -1,6 +1,8 @@
 <?php
 session_start();
 include '../admin/connection.php';
+include ("header.php");
+
 
 $login_error = $_SESSION['login_error'] ?? '';
 unset($_SESSION['login_error']);
