@@ -1,5 +1,7 @@
 <?php
-session_start();
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
 
 // ========== DATABASE CONNECTION ==========
 $servername = "localhost";
@@ -47,6 +49,35 @@ if (isset($_POST['submit'])) {
 // ========== USER SIGNUP & LOGIN ==========
 $signup_error = $login_error = "";
 
+// PASSWORD LOGIN
+if (isset($_POST['login'])) {
+    $email = $_POST['email'];
+    $password = $_POST['password'];
+
+    $stmt = $conn->prepare("SELECT id, name, password, is_verified FROM users WHERE email=?");
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $stmt->store_result();
+    if ($stmt->num_rows == 1) {
+        $stmt->bind_result($id, $name, $hashed_password, $is_verified);
+        $stmt->fetch();
+        if (!$is_verified) {
+            $login_error = "Please verify your email before login.";
+        } elseif (!empty($hashed_password) && password_verify($password, $hashed_password)) {
+            $_SESSION['user_id'] = $id;
+            $_SESSION['user_name'] = $name;
+            $_SESSION['user_email'] = $email;
+            header("Location: ../user/index.php");
+            exit();
+        } else {
+            $login_error = "Invalid password!";
+        }
+    } else {
+        $login_error = "Email not registered!";
+    }
+}
+
+// PASSWORD SIGNUP
 if (isset($_POST['signup'])) {
     $name = $_POST['name'];
     $mobile = $_POST['mobile'];
@@ -56,47 +87,24 @@ if (isset($_POST['signup'])) {
     $password = $_POST['password'];
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-    $stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
+    $stmt = $conn->prepare("SELECT id FROM users WHERE email=?");
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $stmt->store_result();
-
     if($stmt->num_rows > 0){
         $signup_error = "Email already registered!";
     } else {
-        $stmt = $conn->prepare("INSERT INTO users (name, mobile, birth, email, address, password) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt = $conn->prepare("INSERT INTO users (name, mobile, birth, email, address, password, is_verified) VALUES (?, ?, ?, ?, ?, ?, 1)");
         $stmt->bind_param("sissss", $name, $mobile, $birth, $email, $address, $hashed_password);
         if($stmt->execute()){
+            $_SESSION['user_id'] = $conn->insert_id;
+            $_SESSION['user_name'] = $name;
             $_SESSION['user_email'] = $email;
             header("Location: ../user/index.php");
             exit();
         } else {
             $signup_error = "Error registering user!";
         }
-    }
-}
-
-if (isset($_POST['login'])) {
-    $email = $_POST['email'];
-    $password = $_POST['password'];
-
-    $stmt = $conn->prepare("SELECT id, password FROM users WHERE email = ?");
-    $stmt->bind_param("s", $email);
-    $stmt->execute();
-    $stmt->store_result();
-
-    if($stmt->num_rows == 1){
-        $stmt->bind_result($id, $hashed_password);
-        $stmt->fetch();
-        if(password_verify($password, $hashed_password)){
-            $_SESSION['user_email'] = $email;
-            header("Location: ../user/index.php");
-            exit();
-        } else {
-            $login_error = "Invalid password!";
-        }
-    } else {
-        $login_error = "Email not registered!";
     }
 }
 ?>
