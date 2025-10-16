@@ -50,7 +50,7 @@
 }
 
 .logo:hover {
-  transform: scale(1.2) rotate(-10deg);
+  transform: scale(1.2);
 }
 
 .nav-links {
