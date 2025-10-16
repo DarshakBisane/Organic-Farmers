@@ -21,38 +21,12 @@ require 'PHPMailer/src/Exception.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-// ==================== ADD PRODUCT ====================
-if (isset($_POST['submit'])) {
-    $name = $_POST['name'];
-    $price = $_POST['price'];
-    $category = $_POST['category'];
-    $search_tag = $_POST['search_tag'];
+// ==================== INITIALIZE VARIABLES ====================
+$show_form = $_GET['show'] ?? 'login';
+$toast_message = '';
+$toast_type = '';
 
-    $target_dir = "uploads/";
-    $file_name = basename($_FILES["image"]["name"]);
-    $target_file = $target_dir . $file_name;
-
-    if (!is_dir($target_dir)) mkdir($target_dir, 0777, true);
-
-    $check = getimagesize($_FILES["image"]["tmp_name"]);
-    if ($check === false) {
-        echo "<p style='color:red;'>❌ File is not a valid image.</p>";
-        exit;
-    }
-
-    if (move_uploaded_file($_FILES["image"]["tmp_name"], $target_file)) {
-        $sql = "INSERT INTO products (name, price, category, search_tag, image) VALUES ('$name', '$price', '$category', '$search_tag', '$file_name')";
-        if ($conn->query($sql) === TRUE) {
-            echo "<p style='color:green;'>✅ Product added successfully!</p>";
-        } else {
-            echo "<p style='color:red;'>❌ Database Error: " . $conn->error . "</p>";
-        }
-    } else {
-        echo "<p style='color:red;'>❌ Failed to upload image.</p>";
-    }
-}
-
-// ==================== USER SIGNUP (EMAIL OTP) ====================
+// ==================== USER SIGNUP ====================
 if (isset($_POST['signup'])) {
     $name = trim($_POST['name']);
     $mobile = trim($_POST['mobile']);
@@ -69,51 +43,77 @@ if (isset($_POST['signup'])) {
     $stmt->store_result();
 
     if ($stmt->num_rows > 0) {
-        $_SESSION['signup_error'] = "Email already registered! Please sign in.";
-        header("Location: ../user/login.php?show=login");
-        exit();
+        $toast_message = "Email already registered! Please sign in.";
+        $toast_type = "error";
+        $show_form = 'login';
+    } else {
+        // Generate OTP and store temporary user data
+        $_SESSION['otp'] = rand(100000, 999999);
+        $_SESSION['temp_user_data'] = [
+            'name' => $name,
+            'mobile' => $mobile,
+            'birth' => $birth,
+            'email' => $email,
+            'address' => $address,
+            'password' => $hashed_password
+        ];
+
+        // Send OTP via PHPMailer
+        $mail = new PHPMailer(true);
+        try {
+            $mail->isSMTP();
+            $mail->Host = 'smtp.gmail.com';
+            $mail->SMTPAuth = true;
+            $mail->Username = 'darshak123321@gmail.com';
+            $mail->Password = 'wvlq ghzc sabe rugy';
+            $mail->SMTPSecure = 'tls';
+            $mail->Port = 587;
+
+            $mail->setFrom('darshak123321@gmail.com', 'OrganicFarm');
+            $mail->addAddress($email, $name);
+            $mail->isHTML(true);
+            $mail->Subject = 'Your OTP for OrganicFarm Signup';
+            $mail->Body = "<h2>Hello $name!</h2><p>Your OTP for signup is: <strong>{$_SESSION['otp']}</strong></p>";
+            $mail->send();
+
+            $toast_message = "OTP sent to your email!";
+            $toast_type = "success";
+            $show_form = 'verify';
+        } catch (Exception $e) {
+            $toast_message = "Signup successful, but OTP could not be sent.";
+            $toast_type = "error";
+            $show_form = 'signup';
+        }
     }
+}
 
-    // Generate OTP and store in session
-    $_SESSION['otp'] = rand(100000, 999999);
-    $_SESSION['temp_user_data'] = [
-        'name' => $name,
-        'mobile' => $mobile,
-        'birth' => $birth,
-        'email' => $email,
-        'address' => $address,
-        'password' => $hashed_password
-    ];
+// ==================== OTP VERIFICATION ====================
+if (isset($_POST['verify'])) {
+    $entered_otp = trim($_POST['otp']);
 
-    // Send OTP email via PHPMailer
-    $mail = new PHPMailer(true);
-    try {
-        $mail->isSMTP();
-        $mail->Host = 'smtp.gmail.com';
-        $mail->SMTPAuth = true;
-        $mail->Username = 'darshak123321@gmail.com'; // Replace with your Gmail
-        $mail->Password = 'wvlq ghzc sabe rugy';    // Gmail App Password
-        $mail->SMTPSecure = 'tls';
-        $mail->Port = 587;
+    if (!isset($_SESSION['otp']) || !isset($_SESSION['temp_user_data'])) {
+        $toast_message = "Session expired. Please sign up again.";
+        $toast_type = "error";
+        $show_form = 'signup';
+    } elseif ($entered_otp == $_SESSION['otp']) {
+        $data = $_SESSION['temp_user_data'];
+        $stmt = $conn->prepare("INSERT INTO users (name, mobile, birth, email, address, password, is_verified) VALUES (?, ?, ?, ?, ?, ?, 1)");
+        $stmt->bind_param("ssssss", $data['name'], $data['mobile'], $data['birth'], $data['email'], $data['address'], $data['password']);
 
-        $mail->setFrom('darshak123321@gmail.com', 'OrganicFarm');
-        $mail->addAddress($email, $name);
-
-        $mail->isHTML(true);
-        $mail->Subject = 'Your OTP for OrganicFarm Signup';
-        $mail->Body = "
-            <h2>Hello $name!</h2>
-            <p>Your OTP for OrganicFarm signup is: <strong>{$_SESSION['otp']}</strong></p>
-            <p>Do not share this OTP with anyone.</p>
-        ";
-
-        $mail->send();
-        header("Location: ../user/verify.php");
-        exit();
-    } catch (Exception $e) {
-        $_SESSION['signup_error'] = "Signup successful, but OTP could not be sent.";
-        header("Location: ../user/login.php?show=signup");
-        exit();
+        if ($stmt->execute()) {
+            unset($_SESSION['otp'], $_SESSION['temp_user_data']);
+            $toast_message = "Account verified successfully! You can now log in.";
+            $toast_type = "success";
+            $show_form = 'login';
+        } else {
+            $toast_message = "Database error. Try again.";
+            $toast_type = "error";
+            $show_form = 'verify';
+        }
+    } else {
+        $toast_message = "Invalid OTP! Please try again.";
+        $toast_type = "error";
+        $show_form = 'verify';
     }
 }
 
@@ -132,25 +132,24 @@ if (isset($_POST['login'])) {
         $stmt->fetch();
 
         if (!$is_verified) {
-            $_SESSION['login_error'] = "Please verify your email before logging in.";
-            header("Location: ../user/login.php?show=login");
-            exit();
-        }
-
-        if (password_verify($password, $hashed_password)) {
+            $toast_message = "Please verify your email before logging in.";
+            $toast_type = "error";
+            $show_form = 'login';
+        } elseif (password_verify($password, $hashed_password)) {
             $_SESSION['user_id'] = $id;
             $_SESSION['user_name'] = $name;
             $_SESSION['user_email'] = $email;
-            header("Location: ../user/index.php");
+            header("Location: index.php");
             exit();
         } else {
-            $_SESSION['login_error'] = "Invalid password!";
+            $toast_message = "Invalid password!";
+            $toast_type = "error";
+            $show_form = 'login';
         }
     } else {
-        $_SESSION['login_error'] = "Email not registered!";
+        $toast_message = "Email not registered!";
+        $toast_type = "error";
+        $show_form = 'login';
     }
-
-    header("Location: ../user/login.php?show=login");
-    exit();
 }
 ?>
