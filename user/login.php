@@ -32,7 +32,7 @@ body{
     background: rgba(255, 255, 255, 0.16);
     border-radius: 16px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    padding: 40px 30px; /* Add more padding top & bottom */
+    padding: 40px 30px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -47,13 +47,13 @@ form.active {
     flex-direction: column;
     align-items: center;
     animation: fadeIn 0.3s ease;
-    margin-top: 10px; /* add space above form content */
-    margin-bottom: 10px; /* add space below form content */
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 
 h2 {
     text-align: center;
-    margin-bottom: 20px; /* increase space below heading */
+    margin-bottom: 20px;
     color: #2e7d32;
 }
 
@@ -145,6 +145,33 @@ form{
     left:27px;
 }
 
+/* ===== Back Button ===== */
+.back-btn {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    background: rgba(255,255,255,0.9);
+    color: #2e7d32;
+    border: none;
+    border-radius: 50%;
+    width: 42px;
+    height: 42px;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: all 0.3s ease;
+    z-index: 999;
+}
+.back-btn:hover {
+    background: #2e7d32;
+    color: white;
+    transform: scale(1.1);
+}
+
 /* Toast */
 .toast{
     position:fixed;
@@ -181,6 +208,9 @@ form{
 </style>
 </head>
 <body>
+
+<!-- Back Button -->
+<button class="back-btn" onclick="history.back()">&#8592;</button>
 
 <div class="toast <?php echo $toast_type; ?> <?php echo $toast_message ? 'show' : ''; ?>">
     <?php echo htmlspecialchars($toast_message); ?>
